@@ -1,0 +1,106 @@
+-- Query used to create quiz funnel --
+
+select question, count(distinct(user_id)) as 'user_count'
+from survey
+group by question;
+
+
+-- Query used to get Women's style eyewear preference resuls --
+
+select fit, count(distinct(user_id))
+from quiz
+where style like 'Women%'
+group by fit
+order by count(distinct(user_id)) desc;
+
+select shape, count(distinct(user_id))
+from quiz
+where style like 'Women%'
+group by shape
+order by count(distinct(user_id)) desc;
+
+select color, count(distinct(user_id))
+from quiz
+where style like 'Women%'
+group by color
+order by count(distinct(user_id)) desc;
+
+
+-- Query used to get Men's style eyewear preference resuls --
+
+select fit, count(distinct(user_id))
+from quiz
+where style like 'Men%'
+group by fit
+order by count(distinct(user_id)) desc;
+
+select shape, count(distinct(user_id))
+from quiz
+where style like 'Men%'
+group by shape
+order by count(distinct(user_id)) desc;
+
+select color, count(distinct(user_id))
+from quiz
+where style like 'Men%'
+group by color
+order by count(distinct(user_id)) desc;
+
+
+-- Query used to calculate quiz to purchase conversion rate --
+
+with funnels as (select distinct q.user_id, h.user_id is not null as 'is_home_try_on', h.number_of_pairs, p.user_id is not null as 'is_purchase'
+from quiz as 'q'
+left join home_try_on as 'h'
+on q.user_id = h.user_id
+left join purchase as 'p'
+on p.user_id = h.user_id)
+select count(user_id), sum(is_purchase),
+1.0 * sum(is_purchase) / count(user_id) as 'quiz_to_purchase'
+from funnels;
+
+
+-- Query used to calculate quiz to home_try_on and home_try_on to purchase conversion rates --
+
+with funnels as (select distinct q.user_id, h.user_id is not null as 'is_home_try_on', h.number_of_pairs, p.user_id is not null as 'is_purchase'
+from quiz as 'q'
+left join home_try_on as 'h'
+on q.user_id = h.user_id
+left join purchase as 'p'
+on p.user_id = h.user_id)
+select count(user_id), sum(is_home_try_on), sum(is_purchase),
+1.0 * sum(is_home_try_on) / count(user_id) as 'quiz_to_try_on',
+1.0 * sum(is_purchase) / sum(is_home_try_on) as 'try_on_to_purchase'
+from funnels;
+
+
+-- Query used to calculate 3 vs. 5 pairs home_try_on to purchase conversion rates --
+
+with funnels as (select distinct q.user_id, h.user_id is not null as 'is_home_try_on', h.number_of_pairs, p.user_id is not null as 'is_purchase'
+from quiz as 'q'
+left join home_try_on as 'h'
+on q.user_id = h.user_id
+left join purchase as 'p'
+on p.user_id = h.user_id)
+select number_of_pairs, sum(is_home_try_on) as 'total_try_on', sum(is_purchase) as 'total_purchase',
+round(1.0 * sum(is_purchase) / sum(is_home_try_on),2) as 'try_on_to_purchase'
+from funnels
+group by number_of_pairs;
+
+
+-- Query used to search for most popular women's styles purchased --
+
+select product_id, model_name, color, count(distinct(user_id))
+from purchase
+where style like 'Women%'
+group by product_id
+order by count(distinct(user_id)) desc;
+
+
+-- Query used to search for most popular men's styles purchased --
+
+select product_id, model_name, color, count(distinct(user_id))
+from purchase
+where style like 'Men%'
+group by product_id
+order by count(distinct(user_id)) desc;
